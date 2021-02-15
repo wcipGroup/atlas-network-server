@@ -1,6 +1,7 @@
 import configparser
 import paho.mqtt.client as mqtt
 from publisher import Publisher
+import json
 
 
 config = None
@@ -9,15 +10,16 @@ mqttc = None
 pub = None
 
 def on_connect(client, userdata, flags, rc):
-    print("Connected with result code "+str(rc))
     client.subscribe("atlas/up")
 
 
 def on_message(client, userdata, msg):
-    print(msg.topic+" "+str(msg.payload))
-    decryption_flag, decryptionStr = checkAuth(msg.payload.decode('utf-8'))
+    frame = json.loads(msg.payload.decode('utf-8'))
+    decryption_flag, decryptionStr = checkAuth(frame["DATA"])
     if decryption_flag:
-        pub.publish(decryptionStr.upper())
+        frame["DATA"] = decryptionStr.upper()
+        pub.publish(json.dumps(frame))
+        print(frame)
         print("Belongs to the network")
     else:
         print("Does not belongs to the network")
@@ -41,8 +43,13 @@ def toHexArrayInt(input):
 def toHexArrayStr(input):
     ret = ""
     for i in range(len(input)):
-        ret = ret + input[i].split("0x")[1]
+        ret = ret + pad2Hex(input[i].split("0x")[1])
     return ret
+
+def pad2Hex(symbol):
+    if len(symbol) == 1:
+        return "0" + symbol
+    return symbol
 
 
 def checkAuth(message):

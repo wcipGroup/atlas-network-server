@@ -1,5 +1,4 @@
 import pika
-import configparser
 
 
 class Publisher:
@@ -14,6 +13,7 @@ class Publisher:
     def publish(self, message):
         try:
             self.channel.basic_publish(exchange='', routing_key='testing', body=message)
+            print("published")
         except Exception as e:
             print(e)
-        print("published")
+
