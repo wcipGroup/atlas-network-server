@@ -1,7 +1,12 @@
 import pika
 
 
-class Publisher:
+def callback(ch, method, properties, body):
+    print(" [x] Received %r" % body)
+
+
+class Consumer:
+    connection = None
 
     def __init__(self, config):
         self.config = config
@@ -10,10 +15,11 @@ class Publisher:
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue='testing')
 
-    def publish(self, message):
-        try:
-            self.channel.basic_publish(exchange='', routing_key='testing', body=message)
-            print("published")
-        except Exception as e:
-            print(e)
+    def consume(self, cf):
+        self.channel.basic_consume('testing',
+                                   on_message_callback=cf)
+        self.channel.start_consuming()
 
+    def stop(self):
+        self.channel.close()
+        self.connection.close()
