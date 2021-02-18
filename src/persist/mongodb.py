@@ -1,5 +1,6 @@
 import pymongo
 
+
 class MongoDB(object):
     DATABASE = None
 
