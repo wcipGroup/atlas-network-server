@@ -16,9 +16,13 @@ class MongoDB(object):
         MongoDB.DATABASE = client[config.get('database')]
 
     @staticmethod
-    def insert(colleciton, data):
-        MongoDB.DATABASE[colleciton].insert(data)
+    def insert(collection, data):
+        MongoDB.DATABASE[collection].insert(data)
+
+    @staticmethod
+    def update(collection, query, update):
+        MongoDB.DATABASE[collection].update(query, update, upsert=True)
 
     @staticmethod
     def find(collection, query):
-        return MongoDB.DATABASE[collection].find(query)
+        return list(MongoDB.DATABASE[collection].find(query))
