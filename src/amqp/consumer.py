@@ -17,7 +17,8 @@ class Consumer:
 
     def consume(self, cf):
         self.channel.basic_consume('testing',
-                                   on_message_callback=cf)
+                                   on_message_callback=cf,
+                                   auto_ack=True)
         self.channel.start_consuming()
 
     def stop(self):
