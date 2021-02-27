@@ -9,6 +9,7 @@ from src.utils.utils import *
 consumer = None
 db = None
 mqttc = None
+key = None
 
 
 def callback(ch, method, properties, body):
@@ -87,8 +88,13 @@ def send_join_accept(devAddr, appKeyC, appKey):
     msg = "2B2B02"
     tmstmp = "00000000"
     msg = msg + pad2Hex(devAddr) + appKeyC + appKey + tmstmp + "0C"
+    decryptedMsg = bytearray.fromhex(msg)
+    encryptedMsg = xor(decryptedMsg, len(decryptedMsg), key, len(key))
+    encryptedMsg = toHexArrayStr(toHexArrayInt(encryptedMsg))
+    dl = encryptedMsg + "/" + devAddr + "&"
 
-    mqttc.publish('atlas/down', msg)
+    mqttc.publish('atlas/down', dl)
+    print("publiced: ", msg)
 
 
 def join_accept(payload, data):
@@ -124,7 +130,7 @@ if __name__ == "__main__":
         config_amqp = config['AMQP']
         config_mongoDB = config['MONGODB']
         config_default = config.defaults()
-
+        key = bytearray.fromhex(config_default["nw_key"])
         mqttc, consumer, db = initClients(config_default, config_amqp, config_mongoDB)
 
     except Exception as e:
