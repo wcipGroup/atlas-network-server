@@ -5,6 +5,8 @@ from src.persist.mongodb import MongoDB
 import paho.mqtt.client as mqtt
 from datetime import datetime
 from src.utils.utils import *
+import threading
+import time
 
 consumer = None
 db = None
@@ -116,6 +118,7 @@ def mac_command(payload, data):
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
     client.subscribe("atlas/down")
+    client.subscribe("atlas/keep_alive")
 
 
 def initClients(config_default, config_amqp, config_mongoDB):
@@ -125,6 +128,12 @@ def initClients(config_default, config_amqp, config_mongoDB):
     consumer_init = Consumer(config_amqp)
     db_init = MongoDB(config_mongoDB)
     return mqttc_init, consumer_init, db_init
+
+
+def mqttc_keep_alive(mqttc):
+    while 1:
+        mqttc.publish('atlas/keep_alive', "heartbeat")
+        time.sleep(30)
 
 
 if __name__ == "__main__":
@@ -142,6 +151,7 @@ if __name__ == "__main__":
         print(e)
         raise e
     try:
+        x = threading.Thread(target=mqttc_keep_alive, args=(mqttc,)).start()
         consumer.consume(callback)
     except KeyboardInterrupt:
         consumer.stop()
