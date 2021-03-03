@@ -70,9 +70,9 @@ def join_request(payload, data):
     try:
         last_seen_date = datetime.now()
         update_last_seen(payload["devAddr"], last_seen_date)
-
+        payload["date"] = last_seen_date
         query = {"devAddr": payload["devAddr"]}
-        update = {"$push": {"frames": {str(last_seen_date): payload}}}
+        update = {"$push": {"frames": payload}}
         db.update('device_raw_data', query, update)
     except Exception:
         raise Exception
