@@ -113,10 +113,15 @@ def mac_command(payload, data):
     print("Mac Command: ", data)
 
 
+def on_connect(client, userdata, flags, rc):
+    print("Connected with result code "+str(rc))
+    client.subscribe("atlas/down")
+
+
 def initClients(config_default, config_amqp, config_mongoDB):
     mqttc_init = mqtt.Client()
+    mqttc_init.on_connect = on_connect
     mqttc_init.connect(config_default['mqtt_ip'], 1883, 60)
-    mqttc_init.subscribe("atlas/down")
     consumer_init = Consumer(config_amqp)
     db_init = MongoDB(config_mongoDB)
     return mqttc_init, consumer_init, db_init

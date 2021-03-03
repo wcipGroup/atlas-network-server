@@ -11,7 +11,9 @@ class Consumer:
     def __init__(self, config):
         self.config = config
         credentials = pika.PlainCredentials(config.get('user'), config.get('passwd'))
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(config.get('amqp_ip'), credentials=credentials))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(config.get('amqp_ip'),
+                                                                            credentials=credentials,
+                                                                            heartbeat=600))
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue='testing')
 
