@@ -1,10 +1,10 @@
-from src.amqp.consumer import Consumer
+from amqp.consumer import Consumer
 import configparser
 import json
-from src.persist.mongodb import MongoDB
+from persist.mongodb import MongoDB
 import paho.mqtt.client as mqtt
 from datetime import datetime
-from src.utils.utils import *
+from utils.utils import *
 import threading
 import time
 
@@ -138,7 +138,8 @@ def mqttc_keep_alive(mqttc):
 
 if __name__ == "__main__":
     try:
-        print("start")
+        print(__name__)
+        print("[processFrame]: start")
         config = configparser.ConfigParser()
         config.read('../config.ini')
         config_amqp = config['AMQP']
@@ -155,4 +156,4 @@ if __name__ == "__main__":
         consumer.consume(callback)
     except KeyboardInterrupt:
         consumer.stop()
-        print("EXIT")
+        print("[processFrame]: EXIT")

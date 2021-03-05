@@ -1,8 +1,8 @@
 import configparser
 import paho.mqtt.client as mqtt
-from src.amqp.publisher import Publisher
+from amqp.publisher import Publisher
 import json
-from src.utils.utils import *
+from utils.utils import *
 
 config = None
 key = None
