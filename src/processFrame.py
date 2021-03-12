@@ -7,6 +7,7 @@ from datetime import datetime
 from utils.utils import *
 import threading
 import time
+import struct
 
 consumer = None
 db = None
@@ -109,7 +110,33 @@ def confirmed_data(payload, data):
 
 def unconfirmed_data(payload, data):
     print("Unconfirmed Data: ", data)
+    payload['devAddr'] = str(int(data[6:8], 16))
+    payload['len'] = str(int(data[62:64], 16))
+    payload['numSensors'] = int(data[8:10], 16)
+    payload['SensorsValue'] = []
+    for i in range(payload['numSensors']):
+        payload['SensorsValue'].append(sensorRead(data, i*10+10))
+    last_seen_date = datetime.now()
+    update_last_seen(payload["devAddr"], last_seen_date)
+    payload["date"] = last_seen_date
+    query = {"devAddr": payload["devAddr"]}
+    update = {"$push": {"frames": payload}}
+    db.update('device_raw_data', query, update)
 
+
+def sensorRead(data, idx):
+    sensorData = {}
+    sensorData['sensorId'] = int(data[idx:idx+2], 16)
+    if sensorData['sensorId'] == 1:
+        sensorData['sensorType'] = "Temperature"
+    elif sensorData['sensorId'] == 2:
+        sensorData['sensorType'] = "PH"
+    elif sensorData['sensorId'] == 3:
+        sensorData['sensorType'] = "Dissolved Oxygen"
+    elif sensorData['sensorId'] == 4:
+        sensorData['sensorType'] = "Conductivity"
+    sensorData['value'] = struct.unpack('f', bytearray.fromhex(data[idx+2:idx+10]))[0]
+    return sensorData
 
 def mac_command(payload, data):
     print("Mac Command: ", data)
