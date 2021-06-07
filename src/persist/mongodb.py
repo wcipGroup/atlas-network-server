@@ -13,7 +13,10 @@ class MongoDB(object):
             username=config.get('user'),
             password=config.get('passwd')
         )
-        MongoDB.DATABASE = client[config.get('database')]
+        if config.get('debug'):
+            MongoDB.DATABASE = client[config.get('debug_database')]
+        else:
+            MongoDB.DATABASE = client[config.get('database')]
 
     @staticmethod
     def insert(collection, data):
