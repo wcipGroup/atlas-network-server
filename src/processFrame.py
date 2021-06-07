@@ -32,17 +32,17 @@ def prepare_payload(frame):
         payload['msgTypeH'] = "joinRequest"
         join_request(payload, data)
     elif payload['msgType'] == '02':
-        join_accept(payload, data)
         payload['msgTypeH'] = "joinAccept"
+        join_accept(payload, data)
     elif payload['msgType'] == '03':
-        confirmed_data(payload, data)
         payload['msgTypeH'] = "confirmedData"
+        confirmed_data(payload, data)
     elif payload['msgType'] == '04':
-        unconfirmed_data(payload, data)
         payload['msgTypeH'] = "unconfirmedData"
+        unconfirmed_data(payload, data)
     elif data[5] == '5':
-        mac_command(payload, data)
         payload['msgTypeH'] = "macCommand"
+        mac_command(payload, data)
     else:
         print('Unknown message type')
         return
@@ -54,13 +54,13 @@ def join_request(payload, data):
     payload['devAddr'] = str(int(data[6:8], 16))
     payload['len'] = str(int(data[18:20], 16))
     device = db.find('devices', {'devAddr': payload['devAddr']})
-    # device: {'devAddr': '', 'ownerId': '', 'appId': '', 'dateCreated': '', 'lastSeen': ''}
+    # device: {'devAddr': '', 'devName': '', 'ownerId': '', 'appId': '', 'dateCreated': '', 'lastSeen': ''}
     if len(device) == 0:
         print('unknown device')
         return
     device = device[0]
     application = db.find('applications', {'appId': device['appId']})
-    # application: {'appId': '', 'ownerId': '', 'appKey': '', 'dateCreated': '', 'devices': []}
+    # application: {'appId': '', appName: '', 'ownerId': '', 'appKey': '', 'hasAppKey': Boolean, 'dateCreated': Date, 'devices': []}
     if len(application) == 0:
         print('application of the device does not exist')
         return
@@ -72,9 +72,10 @@ def join_request(payload, data):
         last_seen_date = datetime.now()
         update_last_seen(payload["devAddr"], last_seen_date)
         payload["date"] = last_seen_date
-        query = {"devAddr": payload["devAddr"]}
-        update = {"$push": {"frames": payload}}
-        db.update('device_raw_data', query, update)
+        db.insert('device_raw_data', payload)
+        # query = {"devAddr": payload["devAddr"]}
+        # update = {"$push": {"frames": payload}}
+        # db.update('device_raw_data', query, update)
     except Exception:
         raise Exception
 
@@ -119,9 +120,10 @@ def unconfirmed_data(payload, data):
     last_seen_date = datetime.now()
     update_last_seen(payload["devAddr"], last_seen_date)
     payload["date"] = last_seen_date
-    query = {"devAddr": payload["devAddr"]}
-    update = {"$push": {"frames": payload}}
-    db.update('device_raw_data', query, update)
+    db.insert('device_raw_data', payload)
+    # query = {"devAddr": payload["devAddr"]}
+    # update = {"$push": {"frames": payload}}
+    # db.update('device_raw_data', query, update)
 
 
 def sensorRead(data, idx):
