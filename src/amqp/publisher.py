@@ -11,13 +11,14 @@ class Publisher:
                                                                                 credentials=credentials,
                                                                                 heartbeat=600))
             self.channel = self.connection.channel()
-            self.channel.queue_declare(queue='testing')
+            self.queue = config.get('queue')
+            self.channel.queue_declare(queue=self.queue)
         except Exception as e:
             raise e
 
     def publish(self, message):
         try:
-            self.channel.basic_publish(exchange='', routing_key='testing', body=message)
+            self.channel.basic_publish(exchange='', routing_key=self.queue, body=message)
             print("published")
         except Exception as e:
             print(e)

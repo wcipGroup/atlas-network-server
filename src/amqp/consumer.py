@@ -15,10 +15,11 @@ class Consumer:
                                                                             credentials=credentials,
                                                                             heartbeat=600))
         self.channel = self.connection.channel()
-        self.channel.queue_declare(queue='testing')
+        self.queue = config.get('queue')
+        self.channel.queue_declare(queue=self.queue)
 
     def consume(self, cf):
-        self.channel.basic_consume('testing',
+        self.channel.basic_consume(self.queue,
                                    on_message_callback=cf,
                                    auto_ack=True)
         self.channel.start_consuming()
