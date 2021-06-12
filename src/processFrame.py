@@ -120,10 +120,40 @@ def unconfirmed_data(payload, data):
     last_seen_date = datetime.now()
     update_last_seen(payload["devAddr"], last_seen_date)
     payload["date"] = last_seen_date
+
+    payload["wcfi"] = calculate_wcfi(payload["SensorsValue"])
     db.insert('device_raw_data', payload)
+    check_downlink_queue(payload['devAddr'])
     # query = {"devAddr": payload["devAddr"]}
     # update = {"$push": {"frames": payload}}
     # db.update('device_raw_data', query, update)
+
+
+def check_downlink_queue(devAddr):
+    macCommand = db.find('downlink_mac', {'devAddr': devAddr})
+    if len(macCommand):
+        macInterval = macCommand[0]['interval']
+        if macInterval['status'] == "pending":
+            send_mac_command(devAddr, 1, macInterval['value'])
+
+
+def send_mac_command(devAddr, commandId, value):
+    msg = "2B2B" + commandId + "5"
+    tmstmp = "00000000"
+    NU = "00"
+    msg = msg + pad2Hex(devAddr) + value + tmstmp + NU + "0E"
+    decryptedMsg = bytearray.fromhex(msg)
+    encryptedMsg = xor(decryptedMsg, len(decryptedMsg), key, len(key))
+    encryptedMsg = toHexArrayStr(toHexArrayInt(encryptedMsg))
+    dl = encryptedMsg + "/" + devAddr + "&"
+
+    mqttc.publish('atlas/down', dl)
+    print("publiced: ", msg)
+
+
+def calculate_wcfi(sensorsValue):
+    # todo: complete this
+    return 2
 
 
 def sensorRead(data, idx):
