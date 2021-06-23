@@ -1,3 +1,5 @@
+import requests
+
 def xor(input, inSize, key, keySize):
     strs = ""
     for i in range(inSize):
@@ -23,3 +25,13 @@ def pad2Hex(symbol):
     if len(symbol) == 1:
         return "0" + symbol
     return symbol
+
+def fetch_data(devAddr, startDate, endDate):
+    url = "localhost/user-data/data/" + devAddr
+    params = {"startDate": startDate, "endDate": endDate}
+    r = requests.get(url, params)
+    return r.json()
+
+def normalize(values):
+    # normalize the values to 5 min and after to 1 hour
+    return []
