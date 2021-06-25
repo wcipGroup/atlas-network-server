@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from utils.utils import makeAverage, fetch_data, jsonToMatrix
 
 def makePrediction(data_matrix, indexOfSensorId):
-    data_hour = MakeAverage(data_matrix, indexOfSensorId)
+    data_hour = makeAverage(data_matrix, indexOfSensorId)
 
     x_test = np.ndarray(shape=(48,1))
     #x_test will take the last 48 samples from data_hour. That is, the last 48 hours of measurements
