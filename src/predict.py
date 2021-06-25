@@ -6,6 +6,9 @@ from datetime import datetime, timedelta
 from utils.utils import makeAverage, fetch_data, jsonToMatrix
 
 def makePrediction(data_matrix, indexOfSensorId):
+    #This function retuns a 12-hour (12 samples) prediction of the selected parameter (indexOfSensorId)
+
+    #First, we average the recieved data to an hour-interval
     data_hour = makeAverage(data_matrix, indexOfSensorId)
 
     x_test = np.ndarray(shape=(48,1))
