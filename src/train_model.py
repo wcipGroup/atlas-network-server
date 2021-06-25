@@ -5,7 +5,7 @@ from utils.utils import makeAverage, fetch_data
 def train(data_matrix, indexOfSensorId, path):
         #indexOfSensorId:  0:tmp, 1:pH, 2:DO,  3:cnd
 	#take the data matrix and make the hour average for the indexOfSensorId
-	data_temp = makeAverage(data_matrix,indexOfSensorId)
+	data_temp = makeAverage(data_matrix,indexOfSensorId)         #temp stands for temporary and not temperature
 	
 	#create the data and then fill the data (this shape is required. Actually is an array with Sensorvalues only)
 	data = np.ndarray(shape=(len(data_temp),1))
