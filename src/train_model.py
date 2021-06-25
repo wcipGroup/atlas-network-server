@@ -66,6 +66,6 @@ if __name__=="__main__":
     # because we want data from all the dates.
 	data_matrix = jsonToMatrix(data)
     for i in range(4):  #4 sensors
-        train(data_matrix, i, "path/to/save")
+        train(data_matrix, i, "path/to/save + "/model_" + i")
     print("end")
 
