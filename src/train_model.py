@@ -56,6 +56,6 @@ if __name__=="__main__":
     data = fetch_data(1, False, False)  # 1 for the 1st device, False and False for the Dates.
     # because we want data from all the dates.
     for i in range(4):  #4 sensors
-        train(data, i, "path/to/save", 1)
+        train(data, i, "path/to/save")
     print("end")
 
