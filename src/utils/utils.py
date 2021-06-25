@@ -41,7 +41,7 @@ def jsonToMatrix(data):
 		data_matrix[i,2] = data[i]["SensorsValue"][2]["value"]
 		data_matrix[i,3] = data[i]["SensorsValue"][3]["value"]
 		data_matrix[i,4] = data[i]["tmstmp"]
-		return data_matrix
+	return data_matrix
 
 def makeAverage(data_matrix, indexOfSensorId):
 	#This function returns a list, whose samples are averaged over an hour interval (corresponding to indexOfSensorId)
