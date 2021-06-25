@@ -1,5 +1,5 @@
 import requests
-from utils.utils import makeAverage, fetch_data
+from utils.utils import makeAverage, fetch_data, jsonToMatrix
 import pandas as pd
 import numpy as np
 import json
@@ -64,7 +64,8 @@ if __name__=="__main__":
     print("start")
     data = fetch_data(1, False, False)  # 1 for the 1st device, False and False for the Dates.
     # because we want data from all the dates.
+	data_matrix = jsonToMatrix(data)
     for i in range(4):  #4 sensors
-        train(data, i, "path/to/save")
+        train(data_matrix, i, "path/to/save")
     print("end")
 
