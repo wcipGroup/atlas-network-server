@@ -1,4 +1,5 @@
 import requests
+import numpy as np
 
 def xor(input, inSize, key, keySize):
     strs = ""
