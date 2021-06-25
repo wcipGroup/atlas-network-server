@@ -5,7 +5,7 @@ from tensorflow import keras
 from datetime import datetime, timedelta
 from utils.utils import makeAverage, fetch_data, jsonToMatrix
 
-def makePrediction(data_matrix, indexOfSensorId):
+def makePrediction(data_matrix, indexOfSensorId, trained_model_path):
     #This function retuns a 12-hour (12 samples) prediction of the selected parameter (indexOfSensorId)
     #The last 48 available hours (48 samples) are used to make the prediction
 
@@ -29,7 +29,7 @@ def makePrediction(data_matrix, indexOfSensorId):
     x_test = np.reshape(x_test, (1, x_test.shape[0], 1))
 
     #load the trained model
-    model = keras.models.load_model("\path")
+    model = keras.models.load_model(trained_model_path)
 
     #make the prediction
     prediction = model.predict(x_test)
@@ -43,5 +43,5 @@ if __name__=="__main__":
     endDate = datetime.today()
     data = fetch_data(1, startDate, endDate)  # data from the last 48 hours
     data_matrix = jsonToMatrix(data)
-    predicted_values = makePrediction(data_matrix, indexOfSensorId)
+    predicted_values = makePrediction(data_matrix, indexOfSensorId,trained_model_path)
     mongoDB.save(predicted_values)
