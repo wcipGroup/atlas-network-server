@@ -33,6 +33,7 @@ def fetch_data(devAddr, startDate, endDate):
     return r.json()
 
 def jsonToMatrix(data):
+	#transforms the json data to a matrix form
 	data_matrix = np.ndarray(shape=(len(data),5))
 	for i in range(0,len(data)):
 		data_matrix[i,0] = data[i]["SensorsValue"][0]["value"]
