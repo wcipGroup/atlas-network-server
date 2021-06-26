@@ -19,12 +19,12 @@ TCPServer.allow_reuse_address = True
 app = get_server(TCPServer, ('0.0.0.0', 2459), RequestHandler)
 
 
-@app.route(slave_ids=[1], function_codes=[3, 4], addresses=list(range(0, 10)))
+@app.route(slave_ids=[1], function_codes=[3, 4], addresses=list(range(0, 21)))
 def read_data_store(slave_id, function_code, address):
     return data_store[address]
 
 
-@app.route(slave_ids=[1], function_codes=[16], addresses=list(range(0, 10)))
+@app.route(slave_ids=[1], function_codes=[16], addresses=list(range(0, 21)))
 def write_data_store(slave_id, function_code, address, value):
     data_store[address] = value
 
