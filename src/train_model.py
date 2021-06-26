@@ -61,11 +61,11 @@ def train(data_matrix, indexOfSensorId, path):
 	return trained_model
 
 if __name__=="__main__":
-    print("start")
-    data = fetch_data(1, False, False)  # 1 for the 1st device, False and False for the Dates.
-    # because we want data from all the dates.
+	print("start")
+	data = fetch_data(1, False, False)  # 1 for the 1st device, False and False for the Dates.
+	# because we want data from all the dates.
 	data_matrix = jsonToMatrix(data)
-    for i in range(4):  #4 sensors
-        train(data_matrix, i, "path/to/save + "/model_" + i")
-    print("end")
+	for i in range(4):  #4 sensors
+		train(data_matrix, i, "/tmp/models/ " + "model_" + str(i))
+	print("end")
 

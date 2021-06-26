@@ -1,0 +1,12 @@
+version: '2'
+services:
+
+  network-server:
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: atlas-network-server
+    image: atlas-network-server:latest
+    restart: always
+    ports:
+      - 2459:2459

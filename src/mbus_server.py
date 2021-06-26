@@ -29,10 +29,13 @@ def write_data_store(slave_id, function_code, address, value):
     data_store[address] = value
 
 
+def initState():
+    data_store[1] = 1
+    data_store[4] = 1
+
 if __name__ == '__main__':
     try:
-        data_store[1] = 1
-        data_store[4] = 1
+        initState()
         app.serve_forever()
     finally:
         app.shutdown()
