@@ -10,3 +10,8 @@ services:
     restart: always
     ports:
       - 2459:2459
+    networks:
+      - network-server
+networks:
+  network-server:
+    name: atlas-project-network
