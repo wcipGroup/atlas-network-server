@@ -150,10 +150,66 @@ def send_mac_command(devAddr, commandId, value):
     mqttc.publish('atlas/down', dl)
     print("publiced: ", msg)
 
-
-def calculate_wcfi(sensorsValue):
-    # todo: complete this
-    return 2
+def fwqi(data, weights = [ 0.5, 0.75, 0.9167, 0.25 ] ):
+    #this function calculates the water quality index
+    #data should be a single point in time
+    #weights are the weighting factors for calculating fwqi
+    
+    
+    #temperature
+    if data[0] >= 23 and data[0] < 28:
+        Tmp = 1
+    elif (data[0] >= 20 and data[0] < 23) or (data[0] >= 28 and data[0] < 29):
+        Tmp = 2
+    elif (data[0] >= 10 and data[0] < 20) or (data[0] >= 29 and data[0] < 30):
+        Tmp = 3
+    elif (data[0] >= 5 and data[0] < 10) or (data[0] >= 30 and data[0] < 34):
+        Tmp = 4
+    else:
+        Tmp = 5
+        
+    #pH
+    if data[1] >= 6.6 and data[1] < 8:
+        pH = 1
+    elif (data[1] >= 6.4 and data[1] < 6.6) or (data[1] >= 8 and data[1] < 8.6):
+        pH = 2
+    elif (data[1] >= 6 and data[1] < 6.4) or (data[1] >= 8.6 and data[1] < 9):
+        pH = 3
+    elif (data[1] >= 4.8 and data[1] < 6) or (data[1] >= 9 and data[1] < 9.2):
+        pH = 4
+    else:
+        pH = 5
+        
+    #DO
+    if data[2] >= 8:
+        DO = 1
+    elif data[2] >= 4 and data[2] < 8:
+        DO = 2
+    elif data[2] >= 3 and data[2] < 4:
+        DO = 3
+    elif data[2] >= 2 and data[2] < 3:
+        DO = 4
+    else:
+        DO = 5
+        
+    #cnd
+    if data[3] < 16:
+        cnd = 1
+    elif data[3] >= 16 and data[3] < 25:
+        cnd = 2
+    elif data[3] >= 25 and data[3] < 36:
+        cnd = 3
+    elif data[3] >= 36 and data[3] < 37:
+        cnd = 4
+    else:
+        cnd = 5
+        
+    
+    FWQI =  round( ( Tmp ** weights[0]) * ( pH ** weights[1] ) * ( DO ** weights[2] ) * ( cnd ** weights[3] ) )
+    if FWQI > 5:
+        FWQI = 5
+  
+    return(FWQI)
 
 
 def sensorRead(data, idx):
