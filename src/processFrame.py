@@ -20,7 +20,6 @@ def callback(ch, method, properties, body):
     payload = prepare_payload(json.loads(body))
 
 
-
 def prepare_payload(frame):
     data = frame['DATA']
     payload = {'crc': data[0:4],
@@ -88,6 +87,7 @@ def update_last_seen(devAddr, date):
     update = {"$set": {"lastSeen": date}}
     db.update('devices', query, update)
 
+
 def send_join_accept(devAddr, appKeyC, appKey):
     msg = "2B2B02"
     tmstmp = "00000000"
@@ -116,12 +116,12 @@ def unconfirmed_data(payload, data):
     payload['numSensors'] = int(data[8:10], 16)
     payload['SensorsValue'] = []
     for i in range(payload['numSensors']):
-        payload['SensorsValue'].append(sensorRead(data, i*10+10))
+        payload['SensorsValue'].append(sensorRead(data, i * 10 + 10))
     last_seen_date = datetime.now()
     update_last_seen(payload["devAddr"], last_seen_date)
     payload["date"] = last_seen_date
 
-    payload["wcfi"] = calculate_wcfi(payload["SensorsValue"])
+    payload["wcfi"] = fwqi(payload["SensorsValue"], payload['devAddr'])
     db.insert('device_raw_data', payload)
     check_downlink_queue(payload['devAddr'])
     # query = {"devAddr": payload["devAddr"]}
@@ -150,71 +150,129 @@ def send_mac_command(devAddr, commandId, value):
     mqttc.publish('atlas/down', dl)
     print("publiced: ", msg)
 
-def fwqi(data, weights = [ 0.5, 0.75, 0.9167, 0.25 ] ):
-    #this function calculates the water quality index
-    #data should be a single point in time
-    #weights are the weighting factors for calculating fwqi
-    
-    
-    #temperature
-    if data[0] >= 23 and data[0] < 28:
+
+def fwqi(data, devAddr, weights=[0.5, 0.75, 0.9167, 0.25]):
+    # this function calculates the water quality index
+    # data should be a single point in time
+    # weights are the weighting factors for calculating fwqi
+
+    system_alerts = []
+    # at the end of this function, this array will hold all the alerts that the system should handle as feedback
+    # either as pushed notification or as system automation
+    potentially_alerts = []
+    # all the alerts that related with individual indexes of 3
+
+    # temperature
+    tmp_val = data[0]["value"]
+    if 23 <= tmp_val < 28:
         Tmp = 1
-    elif (data[0] >= 20 and data[0] < 23) or (data[0] >= 28 and data[0] < 29):
+    elif (20 <= tmp_val < 23) or (28 <= tmp_val < 29):
         Tmp = 2
-    elif (data[0] >= 10 and data[0] < 20) or (data[0] >= 29 and data[0] < 30):
+    elif 10 <= tmp_val < 20:
         Tmp = 3
-    elif (data[0] >= 5 and data[0] < 10) or (data[0] >= 30 and data[0] < 34):
+        potentially_alerts.append({"actuator": "hotWater", "actionTime": 20})
+    elif 29 <= tmp_val < 30:
+        Tmp = 3
+        potentially_alerts.append({"actuator": "coldWater", "actionTime": 20})
+    elif 5 <= tmp_val < 10:
         Tmp = 4
-    else:
+        system_alerts.append({"actuator": "hotWater", "actionTime": 30})
+    elif 30 <= tmp_val < 34:
+        Tmp = 4
+        system_alerts.append({"actuator": "coldWater", "actionTime": 30})
+    elif tmp_val < 5:
         Tmp = 5
-        
-    #pH
-    if data[1] >= 6.6 and data[1] < 8:
+        system_alerts.append({"actuator": "hotWater", "actionTime": 40})
+    elif tmp_val >= 34:
+        Tmp = 5
+        system_alerts.append({"actuator": "coldWater", "actionTime": 40})
+
+    # pH
+    ph_value = data[1]["value"]
+    if 6.6 <= ph_value < 8:
         pH = 1
-    elif (data[1] >= 6.4 and data[1] < 6.6) or (data[1] >= 8 and data[1] < 8.6):
+    elif (6.4 <= ph_value < 6.6) or (8 <= ph_value < 8.6):
         pH = 2
-    elif (data[1] >= 6 and data[1] < 6.4) or (data[1] >= 8.6 and data[1] < 9):
+    elif 6 <= ph_value < 6.4:
         pH = 3
-    elif (data[1] >= 4.8 and data[1] < 6) or (data[1] >= 9 and data[1] < 9.2):
+        potentially_alerts.append({"actuator": "acid", "actionTime": 20})
+    elif 8.6 <= ph_value < 9:
+        pH = 3
+        potentially_alerts.append({"actuator": "base", "actionTime": 20})
+    elif 4.8 <= ph_value < 6:
         pH = 4
-    else:
+        system_alerts.append({"actuator": "acid", "actionTime": 30})
+    elif 9 <= ph_value < 9.2:
+        pH = 4
+        system_alerts.append({"actuator": "base", "actionTime": 30})
+    elif ph_value < 4.8:
         pH = 5
-        
-    #DO
-    if data[2] >= 8:
+        system_alerts.append({"actuator": "acid", "actionTime": 40})
+    elif ph_value >= 9.2:
+        pH = 5
+        system_alerts.append({"actuator": "base", "actionTime": 40})
+
+    # DO
+    do_value = data[2]["value"]
+    if do_value >= 8:
         DO = 1
-    elif data[2] >= 4 and data[2] < 8:
+    elif 4 <= do_value < 8:
         DO = 2
-    elif data[2] >= 3 and data[2] < 4:
+    elif 3 <= do_value < 4:
         DO = 3
-    elif data[2] >= 2 and data[2] < 3:
+        potentially_alerts.append({"actuator": "oxygen", "actionTime": 20})
+    elif 2 <= do_value < 3:
         DO = 4
+        system_alerts.append({"actuator": "oxygen", "actionTime": 30})
     else:
         DO = 5
-        
-    #cnd
-    if data[3] < 16:
+        system_alerts.append({"actuator": "oxygen", "actionTime": 40})
+
+    # cnd
+    cnd_value = data[3]["value"]
+    if cnd_value < 16:
         cnd = 1
-    elif data[3] >= 16 and data[3] < 25:
+    elif 16 <= cnd_value < 25:
         cnd = 2
-    elif data[3] >= 25 and data[3] < 36:
+    elif 25 <= cnd_value < 36:
         cnd = 3
-    elif data[3] >= 36 and data[3] < 37:
+    elif 36 <= cnd_value < 37:
         cnd = 4
     else:
         cnd = 5
-        
-    
-    FWQI =  round( ( Tmp ** weights[0]) * ( pH ** weights[1] ) * ( DO ** weights[2] ) * ( cnd ** weights[3] ) )
+
+    FWQI = round((Tmp ** weights[0]) * (pH ** weights[1]) * (DO ** weights[2]) * (cnd ** weights[3]))
     if FWQI > 5:
         FWQI = 5
-  
-    return(FWQI)
 
+    # for fwqi over 2, we may include all the potentially alerts.
+    if FWQI > 2:
+        for alert in potentially_alerts:
+            system_alerts.append(alert)
+
+    if len(system_alerts):
+        handle_alerts(system_alerts, devAddr)
+    return (FWQI)
+
+
+def handle_alerts(alerts, devAddr):
+    automations_flag = notification_policy(devAddr)
+    if automations_flag:
+        # TODO: add mbus client
+        print("saving for mbus server")
+    else:
+        # TODO: find a notification method and implement it
+        print("notifications only")
+
+
+def notification_policy(devAddr):
+    # this function should check for the notification policy of the proper user in his profile.
+    # the flow should be: devAddr -> ownerId -> profile -> return(autoActions)
+    return False
 
 def sensorRead(data, idx):
     sensorData = {}
-    sensorData['sensorId'] = int(data[idx:idx+2], 16)
+    sensorData['sensorId'] = int(data[idx:idx + 2], 16)
     if sensorData['sensorId'] == 1:
         sensorData['sensorType'] = "Temperature"
     elif sensorData['sensorId'] == 2:
@@ -223,15 +281,16 @@ def sensorRead(data, idx):
         sensorData['sensorType'] = "Dissolved Oxygen"
     elif sensorData['sensorId'] == 4:
         sensorData['sensorType'] = "Conductivity"
-    sensorData['value'] = struct.unpack('f', bytearray.fromhex(data[idx+2:idx+10]))[0]
+    sensorData['value'] = struct.unpack('f', bytearray.fromhex(data[idx + 2:idx + 10]))[0]
     return sensorData
+
 
 def mac_command(payload, data):
     print("Mac Command: ", data)
 
 
 def on_connect(client, userdata, flags, rc):
-    print("Connected with result code "+str(rc))
+    print("Connected with result code " + str(rc))
     client.subscribe("atlas/down")
     client.subscribe("atlas/keep_alive")
 
