@@ -14,6 +14,8 @@ db = None
 mqttc = None
 key = None
 
+# TODO: exclude duplicated messages
+
 
 def callback(ch, method, properties, body):
     print(" [x] Received %r" % body)
@@ -24,9 +26,14 @@ def prepare_payload(frame):
     data = frame['DATA']
     payload = {'crc': data[0:4],
                'msgType': data[4:6],
+               'gwId': frame['GW_ID'],
                'snrUl': frame['SNR'],
                'rssiUl': frame['RSSI'],
                'tmstmp': frame['TMSTMP']}
+    try:
+        update_gw_last_seen(frame['GW_ID'], datetime.now())
+    except Exception:
+        pass
     if payload['msgType'] == '01':
         payload['msgTypeH'] = "joinRequest"
         join_request(payload, data)
@@ -59,7 +66,8 @@ def join_request(payload, data):
         return
     device = device[0]
     application = db.find('applications', {'appId': device['appId']})
-    # application: {'appId': '', appName: '', 'ownerId': '', 'appKey': '', 'hasAppKey': Boolean, 'dateCreated': Date, 'devices': []}
+    # application: {'appId': '', appName: '', 'ownerId': '', 'appKey': '', 'hasAppKey': Boolean, 'dateCreated': Date,
+    # 'devices': []}
     if len(application) == 0:
         print('application of the device does not exist')
         return
@@ -79,16 +87,23 @@ def join_request(payload, data):
         raise Exception
 
     appKeyC = "01" if application['appKey'] else "00"
-    send_join_accept(device['devAddr'], appKeyC, application['appKey'])
+    send_join_accept(device['devAddr'], appKeyC, application['appKey'], payload['gwId'])
 
 
+# Add the gw_id to last seen as well.
 def update_last_seen(devAddr, date):
     query = {"devAddr": devAddr}
     update = {"$set": {"lastSeen": date}}
     db.update('devices', query, update)
 
 
-def send_join_accept(devAddr, appKeyC, appKey):
+def update_gw_last_seen(gwId, date):
+    query = {"gwId": gwId}
+    update = {"$set": {"lastSeen": date}}
+    db.update('gateways', query, update)
+
+
+def send_join_accept(devAddr, appKeyC, appKey, gwId):
     msg = "2B2B02"
     tmstmp = "00000000"
     msg = msg + pad2Hex(devAddr) + appKeyC + appKey + tmstmp + "0C"
@@ -96,9 +111,8 @@ def send_join_accept(devAddr, appKeyC, appKey):
     encryptedMsg = xor(decryptedMsg, len(decryptedMsg), key, len(key))
     encryptedMsg = toHexArrayStr(toHexArrayInt(encryptedMsg))
     dl = encryptedMsg + "/" + devAddr + "&"
-
-    mqttc.publish('atlas/down', dl)
-    print("publiced: ", msg)
+    mqttc.publish("atlas/%s/down" % gwId, dl)
+    print("published: ", msg)
 
 
 def join_accept(payload, data):
@@ -123,21 +137,21 @@ def unconfirmed_data(payload, data):
 
     payload["wcfi"] = fwqi(payload["SensorsValue"], payload['devAddr'])
     db.insert('device_raw_data', payload)
-    check_downlink_queue(payload['devAddr'])
+    check_downlink_queue(payload['devAddr'], payload["gwId"])
     # query = {"devAddr": payload["devAddr"]}
     # update = {"$push": {"frames": payload}}
     # db.update('device_raw_data', query, update)
 
 
-def check_downlink_queue(devAddr):
+def check_downlink_queue(devAddr, gwId):
     macCommand = db.find('downlink_mac', {'devAddr': devAddr})
     if len(macCommand):
         macInterval = macCommand[0]['interval']
         if macInterval['status'] == "pending":
-            send_mac_command(devAddr, 1, macInterval['value'])
+            send_mac_command(devAddr, 1, macInterval['value'], gwId)
 
 
-def send_mac_command(devAddr, commandId, value):
+def send_mac_command(devAddr, commandId, value, gwId):
     msg = "2B2B" + commandId + "5"
     tmstmp = "00000000"
     NU = "00"
@@ -147,8 +161,8 @@ def send_mac_command(devAddr, commandId, value):
     encryptedMsg = toHexArrayStr(toHexArrayInt(encryptedMsg))
     dl = encryptedMsg + "/" + devAddr + "&"
 
-    mqttc.publish('atlas/down', dl)
-    print("publiced: ", msg)
+    mqttc.publish('atlas/%s/down' % gwId, dl)
+    print("published: ", msg)
 
 
 def fwqi(data, devAddr, weights=[0.5, 0.75, 0.9167, 0.25]):
@@ -291,7 +305,7 @@ def mac_command(payload, data):
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code " + str(rc))
-    client.subscribe("atlas/down")
+    client.subscribe("atlas/+/down")
     client.subscribe("atlas/keep_alive")
 
 
