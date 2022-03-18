@@ -12,6 +12,7 @@ class Consumer:
         self.config = config
         credentials = pika.PlainCredentials(config.get('user'), config.get('passwd'))
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(config.get('amqp_ip'),
+                                                                            port=config.get('amqp_port'),
                                                                             credentials=credentials,
                                                                             heartbeat=600))
         self.channel = self.connection.channel()
