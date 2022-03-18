@@ -3,6 +3,8 @@ import paho.mqtt.client as mqtt
 from amqp.publisher import Publisher
 import json
 from utils.utils import xor, toHexArrayInt, toHexArrayStr
+import threading
+import time
 
 config = None
 key = None
@@ -11,19 +13,23 @@ publisher = None
 
 
 def on_connect(client, userdata, flags, rc):
-    client.subscribe("atlas/up")
+    client.subscribe("atlas/+/up")
 
 
 def on_message(client, userdata, msg):
-    frame = json.loads(msg.payload.decode('utf-8'))
-    decryption_flag, decryptionStr = checkAuth(frame["DATA"])
-    if decryption_flag:
-        frame["DATA"] = decryptionStr.upper()
-        publisher.publish(json.dumps(frame))
-        print(frame)
-        print("Belongs to the network")
-    else:
-        print("Does not belongs to the network")
+    try:
+        frame = json.loads(msg.payload.decode('utf-8'))
+        decryption_flag, decryptionStr = checkAuth(frame["DATA"])
+        if decryption_flag:
+            frame["DATA"] = decryptionStr.upper()
+            frame["GW_ID"] = msg.topic.split("/")[1]
+            publisher.publish(json.dumps(frame))
+        else:
+            print("Does not belongs to the network")
+    except Exception as ex:
+        print(ex)
+        return
+
 
 
 def checkAuth(message):
@@ -39,6 +45,10 @@ def checkAuth(message):
     # Returns True only if the first 2 bytes are 0x2B. That means that everything is OK and the message was encrypted
     # with the proper network key
 
+def mqttc_keep_alive(mqttc):
+    while 1:
+        mqttc.publish('atlas/keep_alive', "heartbeat")
+        time.sleep(30)
 
 def initClients():
     client = mqtt.Client()
@@ -49,7 +59,6 @@ def initClients():
 
 
 if __name__ == "__main__":
-    print("[check_auth]: Start of the program")
     try:
         config = configparser.ConfigParser()
         config.read('../config.ini')
@@ -58,6 +67,8 @@ if __name__ == "__main__":
         publisher = Publisher(config_amqp)
         key = bytearray.fromhex(config["nw_key"])
         mqttc = initClients()
+        threading.Thread(target=mqttc_keep_alive, args=(mqttc,)).start()
+        print("[check_auth]: Start of the program")
     except Exception as e:
         print(e)
         raise exit(1)
