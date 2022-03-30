@@ -14,6 +14,7 @@ db = None
 mqttc = None
 key = None
 
+
 # TODO: exclude duplicated messages
 
 
@@ -112,6 +113,8 @@ def send_join_accept(devAddr, appKeyC, appKey, gwId):
     encryptedMsg = toHexArrayStr(toHexArrayInt(encryptedMsg))
     dl = encryptedMsg + "/" + devAddr + "&"
     mqttc.publish("atlas/%s/down" % gwId, dl)
+    db.update('devices', {'devAddr': devAddr},
+              {"$set": {"interval": "5", "txPower": 0}})
     print("published: ", msg)
 
 
@@ -148,21 +151,38 @@ def check_downlink_queue(devAddr, gwId):
     if len(macCommand):
         macInterval = macCommand[0]['interval']
         if macInterval['status'] == "pending":
-            send_mac_command(devAddr, 1, macInterval['value'], gwId)
+            if send_mac_command(devAddr, 2, macInterval['value'], gwId):
+                db.update('downlink_mac', {'devAddr': devAddr},
+                          {"$set": {"interval": {"commandType": "interval", "commandId": 2,
+                                                 "dateUpdated": datetime.now(), "status": "sent"}}})
+                db.update('devices', {'devAddr': devAddr},
+                          {"$set": {"interval": macInterval['value']}})
+                return
+        macTxPower = macCommand[0]['txPower']
+        if macTxPower['status'] == "pending":
+            if send_mac_command(devAddr, 4, macTxPower['value'], gwId):
+                db.update('downlink_mac', {'devAddr': devAddr},
+                          {"$set": {"txPower": {"commandType": "txPower", "commandId": 4,
+                                                 "dateUpdated": datetime.now(), "status": "sent"}}})
+                db.update('devices', {'devAddr': devAddr},
+                          {"$set": {"txPower": macTxPower['value']}})
+                return
 
 
 def send_mac_command(devAddr, commandId, value, gwId):
-    msg = "2B2B" + commandId + "5"
-    tmstmp = "00000000"
-    NU = "00"
-    msg = msg + pad2Hex(devAddr) + value + tmstmp + NU + "0E"
-    decryptedMsg = bytearray.fromhex(msg)
-    encryptedMsg = xor(decryptedMsg, len(decryptedMsg), key, len(key))
-    encryptedMsg = toHexArrayStr(toHexArrayInt(encryptedMsg))
-    dl = encryptedMsg + "/" + devAddr + "&"
-
-    mqttc.publish('atlas/%s/down' % gwId, dl)
-    print("published: ", msg)
+    try:
+        msg = "2B2B" + str(commandId) + "5"
+        tmstmp = "00000000"
+        NU = "00"
+        msg = msg + pad2Hex(devAddr) + pad2Hex("%x" % int(value)) + tmstmp + NU + "0E"
+        decryptedMsg = bytearray.fromhex(msg)
+        encryptedMsg = xor(decryptedMsg, len(decryptedMsg), key, len(key))
+        encryptedMsg = toHexArrayStr(toHexArrayInt(encryptedMsg))
+        dl = encryptedMsg + "/" + devAddr + "&"
+        mqttc.publish('atlas/%s/down' % gwId, dl)
+        return True
+    except Exception as e:
+        return False
 
 
 def fwqi(data, devAddr, weights=[0.5, 0.75, 0.9167, 0.25]):
@@ -283,6 +303,7 @@ def notification_policy(devAddr):
     # this function should check for the notification policy of the proper user in his profile.
     # the flow should be: devAddr -> ownerId -> profile -> return(autoActions)
     return False
+
 
 def sensorRead(data, idx):
     sensorData = {}
