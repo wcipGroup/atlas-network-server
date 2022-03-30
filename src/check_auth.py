@@ -47,7 +47,7 @@ def checkAuth(message):
 
 def mqttc_keep_alive(mqttc):
     while 1:
-        mqttc.publish('atlas/keep_alive', "heartbeat")
+        mqttc.publish('atlas/keep_alive', "heartbeat [check auth]")
         time.sleep(30)
 
 def initClients():
