@@ -29,3 +29,7 @@ class MongoDB(object):
     @staticmethod
     def find(collection, query):
         return list(MongoDB.DATABASE[collection].find(query))
+
+    @staticmethod
+    def find_limit_ordered(collection, query, limit):
+        return list(MongoDB.DATABASE[collection].find(query).limit(limit).sort("date", -1))

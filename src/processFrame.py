@@ -140,10 +140,54 @@ def unconfirmed_data(payload, data):
 
     payload["wcfi"] = fwqi(payload["SensorsValue"], payload['devAddr'])
     db.insert('device_raw_data', payload)
+    # mac_optimizations(payload['devAddr'])
     check_downlink_queue(payload['devAddr'], payload["gwId"])
-    # query = {"devAddr": payload["devAddr"]}
-    # update = {"$push": {"frames": payload}}
-    # db.update('device_raw_data', query, update)
+
+
+def mac_optimizations(devAddr):
+    device = db.find('devices', {'devAddr': devAddr})[0]
+    preference = device["optimizations"] if "optimizations" in device.keys() else False
+    if not preference:
+        return
+    numOfPackets = 5
+    """"List of packets: [pkt1, pkt2, ...]"""
+    last_packets = db.find_limit_ordered('device_raw_data', {'devAddr': devAddr, 'msgType': "04"}, numOfPackets)
+    if len(last_packets) < numOfPackets:
+        return
+    """"Packet: {snrUl: int, rssiUl: int, date: date, ...}"""
+    update_txPower(devAddr=devAddr, value=0)
+    """Value
+        0->Low Power
+        1->Medium Power
+        2->High Power
+    """
+    update_interval(devAddr=devAddr, value=34)
+    """Value in seconds"""
+    return
+
+
+def update_txPower(devAddr, value):
+    """Value
+    0->Low Power
+    1->Medium Power
+    2->High Power
+     """
+    if value not in [0, 1, 2]:
+        return
+    db.update('downlink_mac', {"devAddr": devAddr},
+              {"$set": {"txPower": {"commandType": "txPower", "commandId": 4,
+                                              "value": value, "dateCreated": datetime.now(),
+                                              "status": "pending"}}})
+
+
+def update_interval(devAddr, value):
+    """Value in seconds"""
+    if not isinstance(value, int):
+        return
+    db.update('downlink_mac', {"devAddr": devAddr},
+              {"$set": {"interval": {"commandType": "interval", "commandId": 2,
+                                     "value": value, "dateCreated": datetime.now(),
+                                     "status": "pending"}}})
 
 
 def check_downlink_queue(devAddr, gwId):
