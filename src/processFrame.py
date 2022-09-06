@@ -193,24 +193,26 @@ def update_interval(devAddr, value):
 def check_downlink_queue(devAddr, gwId):
     macCommand = db.find('downlink_mac', {'devAddr': devAddr})
     if len(macCommand):
-        macInterval = macCommand[0]['interval']
-        if macInterval['status'] == "pending":
-            if send_mac_command(devAddr, 2, macInterval['value'], gwId):
-                db.update('downlink_mac', {'devAddr': devAddr},
-                          {"$set": {"interval": {"commandType": "interval", "commandId": 2,
-                                                 "dateUpdated": datetime.now(), "status": "sent"}}})
-                db.update('devices', {'devAddr': devAddr},
-                          {"$set": {"interval": macInterval['value']}})
-                return
-        macTxPower = macCommand[0]['txPower']
-        if macTxPower['status'] == "pending":
-            if send_mac_command(devAddr, 4, macTxPower['value'], gwId):
-                db.update('downlink_mac', {'devAddr': devAddr},
-                          {"$set": {"txPower": {"commandType": "txPower", "commandId": 4,
-                                                 "dateUpdated": datetime.now(), "status": "sent"}}})
-                db.update('devices', {'devAddr': devAddr},
-                          {"$set": {"txPower": macTxPower['value']}})
-                return
+        if 'interval' in macCommand[0].keys():
+            macInterval = macCommand[0]['interval']
+            if macInterval['status'] == "pending":
+                if send_mac_command(devAddr, 2, macInterval['value'], gwId):
+                    db.update('downlink_mac', {'devAddr': devAddr},
+                              {"$set": {"interval": {"commandType": "interval", "commandId": 2,
+                                                     "dateUpdated": datetime.now(), "status": "sent"}}})
+                    db.update('devices', {'devAddr': devAddr},
+                              {"$set": {"interval": macInterval['value']}})
+                    return
+        if 'txPower' in macCommand[0].keys():
+            macTxPower = macCommand[0]['txPower']
+            if macTxPower['status'] == "pending":
+                if send_mac_command(devAddr, 4, macTxPower['value'], gwId):
+                    db.update('downlink_mac', {'devAddr': devAddr},
+                              {"$set": {"txPower": {"commandType": "txPower", "commandId": 4,
+                                                     "dateUpdated": datetime.now(), "status": "sent"}}})
+                    db.update('devices', {'devAddr': devAddr},
+                              {"$set": {"txPower": macTxPower['value']}})
+                    return
 
 
 def send_mac_command(devAddr, commandId, value, gwId):
