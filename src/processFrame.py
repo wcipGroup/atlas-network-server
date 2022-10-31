@@ -8,6 +8,7 @@ from utils.utils import xor, toHexArrayStr, toHexArrayInt, pad2Hex
 import threading
 import time
 import struct
+import subprocess
 
 consumer = None
 db = None
@@ -139,6 +140,7 @@ def unconfirmed_data(payload, data):
     payload["date"] = last_seen_date
 
     payload["wcfi"] = fwqi(payload["SensorsValue"], payload['devAddr'])
+    payload["alert"] = alert(payload["SensorsValue"], payload['devAddr'])
     db.insert('device_raw_data', payload)
     # mac_optimizations(payload['devAddr'])
     check_downlink_queue(payload['devAddr'], payload["gwId"])
@@ -333,6 +335,51 @@ def fwqi(data, devAddr, weights=[0.5, 0.75, 0.9167, 0.25]):
     if len(system_alerts):
         handle_alerts(system_alerts, devAddr)
     return (FWQI)
+
+def alert(data,devAddr):
+    # this function sends email notification if a parameter is out of the desired bounds
+
+    # temperature
+    tmp_val = data[0]["value"]
+    if tmp_val < 10:
+        send_email("temperature",tmp_val)
+        subprocess.call("php /path/to/your/script/send_email.php")	
+    elif tmp_val >= 30:
+        send_email("temperature",tmp_val)
+        subprocess.call("php /path/to/your/script/send_email.php")	
+
+    # pH
+    ph_value = data[1]["value"]
+    if ph_value <= 6:
+        send_email("pH",ph_value)
+        subprocess.call("php /path/to/your/script/send_email.php")	
+    elif ph_value >= 9:
+        send_email("pH",ph_value)
+        subprocess.call("php /path/to/your/script/send_email.php")	
+
+    # DO
+    do_value = data[2]["value"]
+    if do_value <= 3:
+        send_email("disolved oxygen",do_value)
+        subprocess.call("php /path/to/your/script/send_email.php")	
+
+    # cnd
+    cnd_value = data[3]["value"]
+    if cnd_value >= 36:
+        send_email("conductivity",cnd_value)
+        subprocess.call("php /path/to/your/script/send_email.php")
+
+
+def send_email(VARIABLE_NAME,VARIABLE_VALUE):
+     f= open("send_email.php","w+")
+     f.write("<?php\r\n") 
+     f.write("$to_email = 'tyrovolas@auth.gr';\r\n")    
+     f.write("$subject = 'ATLAS Warning';\r\n")     
+     f.write("$message = 'Warning! The value of ' + str(VARIABLE_NAME) + is %d'; \r\n" % VARIABLE_VALUE)
+     f.write("$headers = 'From: info@atlas.com';\r\n")
+     f.write("mail($to_email,$subject,$message,$headers);\r\n")
+     f.write("?>\r\n")
+     f.close()  
 
 
 def handle_alerts(alerts, devAddr):
