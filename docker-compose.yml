@@ -1,6 +1,5 @@
 version: '2'
 services:
-
   network-server:
     build:
       context: .
@@ -12,6 +11,8 @@ services:
       - 2459:2459
     networks:
       - network-server
+    volumes:
+      - /srv/atlas-network-server/alarms:/usr/local/alarms
 networks:
   network-server:
     name: atlas-project-network

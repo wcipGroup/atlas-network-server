@@ -9,6 +9,7 @@ import threading
 import time
 import struct
 import subprocess
+import os
 
 consumer = None
 db = None
@@ -138,12 +139,56 @@ def unconfirmed_data(payload, data):
     last_seen_date = datetime.now()
     update_last_seen(payload["devAddr"], last_seen_date)
     payload["date"] = last_seen_date
-
+    
     payload["wcfi"] = fwqi(payload["SensorsValue"], payload['devAddr'])
-    payload["alert"] = alert(payload["SensorsValue"], payload['devAddr'])
+    # alert(payload["SensorsValue"], payload['devAddr'])
     db.insert('device_raw_data', payload)
     # mac_optimizations(payload['devAddr'])
     check_downlink_queue(payload['devAddr'], payload["gwId"])
+
+
+def alert(data,devAddr):
+    # this function sends email notification if a parameter is out of the desired bounds
+    # tmp_val = data[0]["value"]
+    # send_email("temperature",tmp_val)
+    # temperature
+    tmp_val = data[0]["value"]
+    if tmp_val < 10:
+        send_email("temperature",tmp_val)
+    elif tmp_val >= 30:
+        send_email("temperature",tmp_val)
+
+    # pH
+    ph_value = data[1]["value"]
+    if ph_value <= 6:
+        send_email("pH",ph_value)
+    elif ph_value >= 9:
+        send_email("pH",ph_value)
+
+    # DO
+    do_value = data[2]["value"]
+    if do_value <= 3:
+        send_email("disolved oxygen",do_value)
+
+    # cnd
+    cnd_value = data[3]["value"]
+    if cnd_value >= 1000:
+        send_email("conductivity",cnd_value)
+    elif cnd_value < 0:
+        send_email("conductivity",cnd_value)
+
+
+
+def send_email(VARIABLE_NAME,VARIABLE_VALUE):
+    f = open("/usr/local/alarms/send_email.php","w+")
+    f.write("<?php\r\n")
+    f.write("$to_email = 'tyrovolas@auth.gr';\r\n")
+    f.write("$subject = 'ATLAS Warning';\r\n")
+    f.write("$message = 'Warning! The value of %s is %d.'; \r\n" % (VARIABLE_NAME, VARIABLE_VALUE))
+    f.write("$headers = 'From: info@atlas.com';\r\n")
+    f.write("mail($to_email,$subject,$message,$headers);\r\n")
+    f.write("?>\r\n")
+    f.close()
 
 
 def mac_optimizations(devAddr):
@@ -233,7 +278,8 @@ def send_mac_command(devAddr, commandId, value, gwId):
         return False
 
 
-def fwqi(data, devAddr, weights=[0.5, 0.75, 0.9167, 0.25]):
+def fwqi(data, devAddr, weights=[0.5, 0.333, 0.166]):
+    #def fwqi(data, devAddr, weights=[0.5, 0.75, 0.9167, 0.25]):
     # this function calculates the water quality index
     # data should be a single point in time
     # weights are the weighting factors for calculating fwqi
@@ -312,20 +358,22 @@ def fwqi(data, devAddr, weights=[0.5, 0.75, 0.9167, 0.25]):
 
     # cnd
     cnd_value = data[3]["value"]
-    if cnd_value < 16:
+    if 150 < cnd_value < 500:
         cnd = 1
-    elif 16 <= cnd_value < 25:
+    elif (100 < cnd_value <= 150) or (500 <= cnd_value < 700):
         cnd = 2
-    elif 25 <= cnd_value < 36:
+    elif (0 < cnd_value <= 100) or (700 <= cnd_value < 1000):
         cnd = 3
-    elif 36 <= cnd_value < 37:
+    elif 1000 <= cnd_value < 2000:
         cnd = 4
     else:
         cnd = 5
 
-    FWQI = round((Tmp ** weights[0]) * (pH ** weights[1]) * (DO ** weights[2]) * (cnd ** weights[3]))
-    if FWQI > 5:
-        FWQI = 5
+    # FWQI = round((Tmp ** weights[0]) * (pH ** weights[1]) * (DO ** weights[2]) * (cnd ** weights[3]))
+    FWQI = (Tmp * weights[1]) + (pH * weights[0]) + (cnd * weights[2])
+    #if FWQI > 5:
+    #    FWQI = 5
+    # FWQI = 28
 
     # for fwqi over 2, we may include all the potentially alerts.
     if FWQI > 2:
@@ -336,50 +384,6 @@ def fwqi(data, devAddr, weights=[0.5, 0.75, 0.9167, 0.25]):
         handle_alerts(system_alerts, devAddr)
     return (FWQI)
 
-def alert(data,devAddr):
-    # this function sends email notification if a parameter is out of the desired bounds
-
-    # temperature
-    tmp_val = data[0]["value"]
-    if tmp_val < 10:
-        send_email("temperature",tmp_val)
-        subprocess.call("php /path/to/your/script/send_email.php")	
-    elif tmp_val >= 30:
-        send_email("temperature",tmp_val)
-        subprocess.call("php /path/to/your/script/send_email.php")	
-
-    # pH
-    ph_value = data[1]["value"]
-    if ph_value <= 6:
-        send_email("pH",ph_value)
-        subprocess.call("php /path/to/your/script/send_email.php")	
-    elif ph_value >= 9:
-        send_email("pH",ph_value)
-        subprocess.call("php /path/to/your/script/send_email.php")	
-
-    # DO
-    do_value = data[2]["value"]
-    if do_value <= 3:
-        send_email("disolved oxygen",do_value)
-        subprocess.call("php /path/to/your/script/send_email.php")	
-
-    # cnd
-    cnd_value = data[3]["value"]
-    if cnd_value >= 36:
-        send_email("conductivity",cnd_value)
-        subprocess.call("php /path/to/your/script/send_email.php")
-
-
-def send_email(VARIABLE_NAME,VARIABLE_VALUE):
-     f= open("send_email.php","w+")
-     f.write("<?php\r\n") 
-     f.write("$to_email = 'tyrovolas@auth.gr';\r\n")    
-     f.write("$subject = 'ATLAS Warning';\r\n")     
-     f.write("$message = 'Warning! The value of ' + str(VARIABLE_NAME) + is %d'; \r\n" % VARIABLE_VALUE)
-     f.write("$headers = 'From: info@atlas.com';\r\n")
-     f.write("mail($to_email,$subject,$message,$headers);\r\n")
-     f.write("?>\r\n")
-     f.close()  
 
 
 def handle_alerts(alerts, devAddr):
