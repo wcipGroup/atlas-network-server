@@ -1,5 +1,5 @@
-FROM python:3.8-alpine
-RUN python3.8 -m pip install --upgrade pip
+FROM python:3.9-alpine
+RUN python3.9 -m pip install --upgrade pip
 RUN mkdir /app
 WORKDIR /app
 COPY . /app
