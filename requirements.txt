@@ -5,4 +5,3 @@ pymongo
 umodbus
 requests
 numpy
-tensorflow
