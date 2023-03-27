@@ -1,5 +1,5 @@
 FROM python:3.8-alpine
-RUN -m pip3 install --upgrade pip
+RUN python3.8 -m pip3 install --upgrade pip
 RUN mkdir /app
 WORKDIR /app
 COPY . /app
