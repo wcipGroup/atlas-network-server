@@ -1,6 +1,6 @@
-configparser
-paho-mqtt
-pika
-pymongo
-umodbus
-requests
+configparser==5.0.1
+paho-mqtt==1.5.1
+pika==1.1.0
+pymongo==3.11.3
+umodbus==1.0.4
+requests==2.25.1
