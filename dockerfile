@@ -3,7 +3,8 @@ RUN python3.8 -m pip install --upgrade pip
 RUN mkdir /app
 WORKDIR /app
 COPY . /app
-RUN python3.8 -m pip install -r requirements.txt
+RUN pip3 install -r requirements.txt
+RUN pip3 install tensorflow==2.1.0
 WORKDIR /app/src
 RUN ["chmod", "+x", "wrapper.sh"]
 CMD ["sh", "./wrapper.sh"]
