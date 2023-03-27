@@ -4,4 +4,3 @@ pika
 pymongo
 umodbus
 requests
-numpy
