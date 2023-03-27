@@ -3,7 +3,7 @@ RUN python3.8 -m pip install --upgrade pip
 RUN mkdir /app
 WORKDIR /app
 COPY . /app
-RUN pip3 install -r requirements.txt
+RUN python3.8 -m pip install -r requirements.txt
 WORKDIR /app/src
 RUN ["chmod", "+x", "wrapper.sh"]
 CMD ["sh", "./wrapper.sh"]
