@@ -131,6 +131,36 @@ def join_accept(payload, data):
 def confirmed_data(payload, data):
     print("Confirmed Data: ", data)
 
+def savePrediction():
+
+    #collection
+    collection = db.device_raw_data
+
+    #number of documents to find
+    n_docs = 864
+
+    #find the first n_docs documents in descending order of 'tmstmp'
+    data = collection.find({"msgType": "04"}).sort("tmstmp", -1).limit(n_docs)
+    data = list(data)
+
+    #transform json to numpy
+    matrix = jsonToMatrix(data)
+
+    #calculate the average in time, for the selected sensor value
+    #data_in_hour = makeAverage(matrix, 300, 0)
+
+    path = "trainedModels/waterQualityTmpModel.h5"
+    indexOfSensorId = 0
+    prediction = makePrediction(matrix, indexOfSensorId, path)
+
+    col = db.predictions
+
+    for i in range(12):
+        col.update_one({"predNo": i+1, "SensorsValue.sensorId": indexOfSensorId+1},{"$set": {f"SensorsValue.{indexOfSensorId}.value": float(prediction[0,i])}})
+        #update time by adding i+1 hours to the current one
+        delta = timedelta(hours=i+1)
+        new_date = datetime.now() + delta
+        col.update_one({"predNo": i+1},{"$set": {"date": new_date}})
 
 def unconfirmed_data(payload, data):
     print("Unconfirmed Data: ", data)
@@ -149,6 +179,7 @@ def unconfirmed_data(payload, data):
     db.insert('device_raw_data', payload)
     # mac_optimizations(payload['devAddr'])
     check_downlink_queue(payload['devAddr'], payload["gwId"])
+    savePrediction()
 
 
 def alert(data,devAddr):
@@ -439,36 +470,6 @@ def initClients(config_default, config_amqp, config_mongoDB):
     db_init = MongoDB(config_mongoDB)
     return mqttc_init, consumer_init, db_init
 
-def savePrediction():
-
-    #collection
-    collection = db.device_raw_data
-
-    #number of documents to find
-    n_docs = 864
-
-    #find the first n_docs documents in descending order of 'tmstmp'
-    data = collection.find({"msgType": "04"}).sort("tmstmp", -1).limit(n_docs)
-    data = list(data)
-
-    #transform json to numpy
-    matrix = jsonToMatrix(data)
-
-    #calculate the average in time, for the selected sensor value
-    #data_in_hour = makeAverage(matrix, 300, 0)
-
-    path = "trainedModels/waterQualityTmpModel.h5"
-    indexOfSensorId = 0
-    prediction = makePrediction(matrix, indexOfSensorId, path)
-
-    col = db.predictions
-
-    for i in range(12):
-        col.update_one({"predNo": i+1, "SensorsValue.sensorId": indexOfSensorId+1},{"$set": {f"SensorsValue.{indexOfSensorId}.value": float(prediction[0,i])}})
-        #update time by adding i+1 hours to the current one
-        delta = timedelta(hours=i+1)
-        new_date = datetime.now() + delta
-        col.update_one({"predNo": i+1},{"$set": {"date": new_date}})
 
 def mqttc_keep_alive(mqttc):
     while 1:
