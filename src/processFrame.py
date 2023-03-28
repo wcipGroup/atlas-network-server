@@ -147,18 +147,25 @@ def savePrediction():
     #transform json to numpy
     matrix = jsonToMatrix(data)
 
-    path = "trainedModels/waterQualityTmpModel.h5"
+    path_Tmp = "trainedModels/waterQualityTmpModel.h5"
     indexOfSensorId = 0
-    prediction = makePrediction(matrix, indexOfSensorId, path)
+    prediction_Tmp = makePrediction(matrix, indexOfSensorId, path_Tmp)
+    
+    #pH
+    path_pH = "trainedModels/waterQualitypHModel.h5"
+    prediction_pH = makePrediction(matrix, indexOfSensorId+1, path_Tmp)
 
     #col = db["predictions"]
 
     for i in range(12):
-        db.update_one("predictions", {"predNo": i+1, "SensorsValue.sensorId": indexOfSensorId+1},{"$set": {f"SensorsValue.{indexOfSensorId}.value": float(prediction[0,i])}})
+        db.update_one("predictions", {"predNo": i+1, "SensorsValue.sensorId": indexOfSensorId+1},{"$set": {f"SensorsValue.{indexOfSensorId}.value": float(prediction_Tmp[0,i])}})
         #update time by adding i+1 hours to the current one
         delta = timedelta(hours=i+1)
         new_date = datetime.now() + delta
         db.update_one("predictions", {"predNo": i+1},{"$set": {"date": new_date}})
+        #pH
+        db.update_one("predictions", {"predNo": i+1, "SensorsValue.sensorId": indexOfSensorId+2},{"$set": {f"SensorsValue.{indexOfSensorId+2}.value": float(prediction_pH[0,i])}})
+     
 
 def unconfirmed_data(payload, data):
     print("Unconfirmed Data: ", data)
