@@ -156,11 +156,11 @@ def savePrediction():
     #col = db["predictions"]
 
     for i in range(12):
-        col.update_one("predictions", {"predNo": i+1, "SensorsValue.sensorId": indexOfSensorId+1},{"$set": {f"SensorsValue.{indexOfSensorId}.value": float(prediction[0,i])}})
+        db.update_one("predictions", {"predNo": i+1, "SensorsValue.sensorId": indexOfSensorId+1},{"$set": {f"SensorsValue.{indexOfSensorId}.value": float(prediction[0,i])}})
         #update time by adding i+1 hours to the current one
         delta = timedelta(hours=i+1)
         new_date = datetime.now() + delta
-        col.update_one("predictions", {"predNo": i+1},{"$set": {"date": new_date}})
+        db.update_one("predictions", {"predNo": i+1},{"$set": {"date": new_date}})
 
 def unconfirmed_data(payload, data):
     print("Unconfirmed Data: ", data)
