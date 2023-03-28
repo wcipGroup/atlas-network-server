@@ -164,7 +164,7 @@ def savePrediction():
         new_date = datetime.now() + delta
         db.update_one("predictions", {"predNo": i+1},{"$set": {"date": new_date}})
         #pH
-        db.update_one("predictions", {"predNo": i+1, "SensorsValue.sensorId": indexOfSensorId+2},{"$set": {f"SensorsValue.{indexOfSensorId+2}.value": float(prediction_pH[0,i])}})
+        db.update_one("predictions", {"predNo": i+1, "SensorsValue.sensorId": indexOfSensorId+2},{"$set": {f"SensorsValue.{indexOfSensorId+1}.value": float(prediction_pH[0,i])}})
      
 
 def unconfirmed_data(payload, data):
