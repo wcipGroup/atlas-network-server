@@ -3,14 +3,15 @@ import tensorflow as tf
 import numpy as np
 from tensorflow import keras
 from datetime import datetime, timedelta
-from utils.utils import makeAverage, fetch_data, jsonToMatrix
+from utils.utils import makeAverage, jsonToMatrix
 
 def makePrediction(data_matrix, indexOfSensorId, trained_model_path):
     #This function retuns a 12-hour (12 samples) prediction of the selected parameter (indexOfSensorId)
     #The last 48 available hours (48 samples) are used to make the prediction
 
-    #First, we average the recieved data to an hour-interval
-    data_hour = makeAverage(data_matrix, indexOfSensorId)
+    #First, we average the recieved data to an hour-interval (or in general timeFrame - interval)
+    TIME_FRAME = 3600
+    data_hour = makeAverage(data_matrix, TIME_FRAME, indexOfSensorId)
 
     x_test = np.ndarray(shape=(48,1))
     #x_test will take the last 48 samples from data_hour. That is, the last 48 hours of measurements
