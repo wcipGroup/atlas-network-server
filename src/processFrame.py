@@ -142,7 +142,7 @@ def savePrediction():
     #find the first n_docs documents in descending order of 'tmstmp'
     #data = db.find("device_raw_data", {"msgType": "04"}).sort("tmstmp", -1).limit(n_docs)
     data = db.find_limit_ordered("device_raw_data", {"msgType": "04"}, n_docs)
-    data = list(data)
+    #data = list(data)
 
     #transform json to numpy
     matrix = jsonToMatrix(data)
