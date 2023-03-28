@@ -140,14 +140,12 @@ def savePrediction():
     n_docs = 864
 
     #find the first n_docs documents in descending order of 'tmstmp'
-    data = db.find("device_raw_data", {"msgType": "04"}).sort("tmstmp", -1).limit(n_docs)
+    #data = db.find("device_raw_data", {"msgType": "04"}).sort("tmstmp", -1).limit(n_docs)
+    data = db.find_limit_ordered("device_raw_data", {"msgType": "04"}, n_docs)
     data = list(data)
 
     #transform json to numpy
     matrix = jsonToMatrix(data)
-
-    #calculate the average in time, for the selected sensor value
-    #data_in_hour = makeAverage(matrix, 300, 0)
 
     path = "trainedModels/waterQualityTmpModel.h5"
     indexOfSensorId = 0
