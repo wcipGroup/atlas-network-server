@@ -4,7 +4,8 @@ import json
 from persist.mongodb import MongoDB
 import paho.mqtt.client as mqtt
 from datetime import datetime
-from utils.utils import xor, toHexArrayStr, toHexArrayInt, pad2Hex, makeAverage, JsonToMatrix
+from utils.utils import xor, toHexArrayStr, toHexArrayInt, pad2Hex, makeAverage, jsonToMatrix
+from predict import makePrediction
 import threading
 import time
 import struct
