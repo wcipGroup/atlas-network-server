@@ -1,5 +1,5 @@
 import requests
-# import numpy as np
+import numpy as np
 
 def xor(input, inSize, key, keySize):
     strs = ""
@@ -32,18 +32,18 @@ def pad2Hex(symbol):
 #     params = {"startDate": startDate, "endDate": endDate}
 #     r = requests.get(url, params)
 #     return r.json()
-#
-# def jsonToMatrix(data):
-# 	#transforms the json data to a matrix form
-# 	data_matrix = np.ndarray(shape=(len(data),5))
-# 	for i in range(0,len(data)):
-# 		data_matrix[i,0] = data[i]["SensorsValue"][0]["value"]
-# 		data_matrix[i,1] = data[i]["SensorsValue"][1]["value"]
-# 		data_matrix[i,2] = data[i]["SensorsValue"][2]["value"]
-# 		data_matrix[i,3] = data[i]["SensorsValue"][3]["value"]
-# 		data_matrix[i,4] = data[i]["tmstmp"]
-# 	return data_matrix
-#
+
+def jsonToMatrix(data):
+ 	#transforms the json data to a matrix form
+ 	data_matrix = np.ndarray(shape=(len(data),5))
+ 	for i in range(0,len(data)):
+ 		data_matrix[i,0] = data[i]["SensorsValue"][0]["value"]
+ 		data_matrix[i,1] = data[i]["SensorsValue"][1]["value"]
+ 		data_matrix[i,2] = data[i]["SensorsValue"][2]["value"]
+ 		data_matrix[i,3] = data[i]["SensorsValue"][3]["value"]
+ 		data_matrix[i,4] = data[i]["tmstmp"]
+ 	return data_matrix
+
 # def makeAverage(data_matrix, indexOfSensorId):
 # 	#This function returns a list, whose samples are averaged over an hour interval (corresponding to indexOfSensorId)
 # 	#data_matrix should be a matrix with rows at the form: [temp, pH, DO, cnd, timestamp]
