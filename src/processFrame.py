@@ -6,6 +6,9 @@ import paho.mqtt.client as mqtt
 from datetime import datetime
 from utils.utils import xor, toHexArrayStr, toHexArrayInt, pad2Hex, makeAverage, jsonToMatrix
 from predict import makePrediction
+import numpy as np
+import tensorflow as tf
+from tensorflow import keras
 import threading
 import time
 import struct
