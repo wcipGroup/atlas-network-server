@@ -153,7 +153,7 @@ def savePrediction():
     
     #pH
     path_pH = "trainedModels/waterQualitypHModel.h5"
-    prediction_pH = makePrediction(matrix, indexOfSensorId+1, path_Tmp)
+    prediction_pH = makePrediction(matrix, indexOfSensorId+1, path_pH)
 
     #col = db["predictions"]
 
