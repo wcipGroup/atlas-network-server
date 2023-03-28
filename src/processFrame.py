@@ -134,7 +134,7 @@ def confirmed_data(payload, data):
 def savePrediction():
 
     #collection
-    collection = db.device_raw_data
+    collection = db["device_raw_data"]
 
     #number of documents to find
     n_docs = 864
@@ -153,7 +153,7 @@ def savePrediction():
     indexOfSensorId = 0
     prediction = makePrediction(matrix, indexOfSensorId, path)
 
-    col = db.predictions
+    col = db["predictions"]
 
     for i in range(12):
         col.update_one({"predNo": i+1, "SensorsValue.sensorId": indexOfSensorId+1},{"$set": {f"SensorsValue.{indexOfSensorId}.value": float(prediction[0,i])}})
