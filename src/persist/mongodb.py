@@ -33,3 +33,7 @@ class MongoDB(object):
     @staticmethod
     def find_limit_ordered(collection, query, limit):
         return list(MongoDB.DATABASE[collection].find(query).limit(limit).sort("date", -1))
+    
+    @staticmethod
+    def update_one(collection, query, update):
+        return MongoDB.DATABASE[collection].update(query, update)
