@@ -229,15 +229,15 @@ def send_email(VARIABLE_NAME,VARIABLE_VALUE):
     f.write("mail($to_email,$subject,$message,$headers);\r\n")
     f.write("?>\r\n")
     f.close()
-    #document = {
-    #"msgBody": "The value of {} is {}".format(VARIABLE_NAME, VARIABLE_VALUE),
-    #"date": datetime.now(),
-    #"time": int(datetime.timestamp(datetime.now())),
-    #"dest": "test@tlas1",
-    #"source": "source",
-    #"msgHeader": "Warning! {} out of bounds!".format(VARIABLE_NAME)
-    #}
-    # db.insert_one('notifications', document)
+    document = {
+    "msgBody": "The value of {} is {}".format(VARIABLE_NAME, VARIABLE_VALUE),
+    "date": datetime.now(),
+    "time": int(datetime.timestamp(datetime.now())),
+    "dest": "test@tlas1",
+    "source": "source",
+    "msgHeader": "Warning! {} out of bounds!".format(VARIABLE_NAME)
+    }
+    db.insert_one('notifications', document)
 
 
 def mac_optimizations(devAddr):
