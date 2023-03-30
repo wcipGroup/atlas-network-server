@@ -229,7 +229,15 @@ def send_email(VARIABLE_NAME,VARIABLE_VALUE):
     f.write("mail($to_email,$subject,$message,$headers);\r\n")
     f.write("?>\r\n")
     f.close()
-    # db.insert_one('notifications', payload)
+    #document = {
+    #"msgBody": "The value of {} is {}".format(VARIABLE_NAME, VARIABLE_VALUE),
+    #"date": datetime.now(),
+    #"time": int(datetime.timestamp(datetime.now())),
+    #"dest": "test@tlas1",
+    #"source": "source",
+    #"msgHeader": "Warning! pH out of bounds!"
+    #}
+    # db.insert_one('notifications', document)
 
 
 def mac_optimizations(devAddr):
