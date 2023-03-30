@@ -235,7 +235,7 @@ def send_email(VARIABLE_NAME,VARIABLE_VALUE):
     #"time": int(datetime.timestamp(datetime.now())),
     #"dest": "test@tlas1",
     #"source": "source",
-    #"msgHeader": "Warning! pH out of bounds!"
+    #"msgHeader": "Warning! {} out of bounds!".format(VARIABLE_NAME)
     #}
     # db.insert_one('notifications', document)
 
