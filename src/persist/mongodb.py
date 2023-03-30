@@ -37,3 +37,7 @@ class MongoDB(object):
     @staticmethod
     def update_one(collection, query, update):
         return MongoDB.DATABASE[collection].update(query, update)
+    
+    @staticmethod
+    def insert_one(collection, data):
+        MongoDB.DATABASE[collection].insert_one(data)
