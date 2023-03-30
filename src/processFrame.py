@@ -180,7 +180,7 @@ def unconfirmed_data(payload, data):
     payload["date"] = last_seen_date
     
     payload["wcfi"] = fwqi(payload["SensorsValue"], payload['devAddr'])
-    # alert(payload["SensorsValue"], payload['devAddr'])
+    alert(payload["SensorsValue"], payload['devAddr'])
     db.insert('device_raw_data', payload)
     # mac_optimizations(payload['devAddr'])
     check_downlink_queue(payload['devAddr'], payload["gwId"])
@@ -206,9 +206,9 @@ def alert(data,devAddr):
         send_email("pH",ph_value)
 
     # DO
-    do_value = data[2]["value"]
-    if do_value <= 3:
-        send_email("disolved oxygen",do_value)
+    #do_value = data[2]["value"]
+    #if do_value <= 3:
+    #    send_email("disolved oxygen",do_value)
 
     # cnd
     cnd_value = data[3]["value"]
@@ -229,6 +229,7 @@ def send_email(VARIABLE_NAME,VARIABLE_VALUE):
     f.write("mail($to_email,$subject,$message,$headers);\r\n")
     f.write("?>\r\n")
     f.close()
+    # db.insert_one('notifications', payload)
 
 
 def mac_optimizations(devAddr):
