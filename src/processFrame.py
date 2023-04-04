@@ -226,7 +226,7 @@ def send_email(VARIABLE_NAME,VARIABLE_VALUE):
     f.write("$subject = 'ATLAS Warning';\r\n")
     f.write("$message = 'Warning! The value of %s is %d.'; \r\n" % (VARIABLE_NAME, VARIABLE_VALUE))
     f.write("$headers = 'From: info@atlas.com';\r\n")
-    f.write("mail($to_email,$subject,$message,$headers);\r\n")
+    #f.write("mail($to_email,$subject,$message,$headers);\r\n")
     f.write("?>\r\n")
     f.close()
     document = {
