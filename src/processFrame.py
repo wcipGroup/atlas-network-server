@@ -222,7 +222,7 @@ def alert(data,devAddr):
 def send_email(VARIABLE_NAME,VARIABLE_VALUE):
     f = open("/usr/local/alarms/send_email.php","w+")
     f.write("<?php\r\n")
-    f.write("$to_email = 'padiaman@auth.gr';\r\n")
+    f.write("$to_email = 'tyrovolas@auth.gr';\r\n")
     f.write("$subject = 'ATLAS Warning';\r\n")
     f.write("$message = 'Warning! The value of %s is %d.'; \r\n" % (VARIABLE_NAME, VARIABLE_VALUE))
     f.write("$headers = 'From: info@atlas.com';\r\n")
